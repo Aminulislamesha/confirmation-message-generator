@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explicit Column Order Confirmation Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #34495e;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .spreadsheet-container {
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-height: 400px;
+            background: #fafafa;
+        }
+        .sheet-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: monospace;
+            font-size: 13px;
+            background: #fff;
+        }
+        .sheet-table th {
+            background: #ebedf0;
+            color: #555;
+            text-align: center;
+            font-weight: normal;
+            border: 1px solid #dcdee2;
+            padding: 6px;
+            user-select: none;
+        }
+        .sheet-table td {
+            border: 1px solid #dcdee2;
+            padding: 6px;
+            min-width: 130px;
+            height: 22px;
+            white-space: nowrap;
+            outline: none;
+        }
+        .sheet-table td:focus {
+            box-shadow: inset 0 0 0 2px #3498db;
+            background: #eaf5ff;
+        }
+        .sheet-table th.row-num {
+            width: 40px;
+            background: #f2f3f5;
+            font-weight: bold;
+        }
+
+        .output-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+        .output-table th, .output-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .output-table th {
+            background-color: #34495e;
+            color: white;
+        }
+        .output-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn-generate {
+            background-color: #3498db;
+            color: white;
+        }
+        .btn-clear {
+            background-color: #e74c3c;
+            color: white;
+        }
+        button {
+            border: none;
+            padding: 12px 20px;
+            font-size: 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .whatsapp-btn {
+            background-color: #25D366;
+            color: white;
+            padding: 8px 12px;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 4px;
+        }
+        .msg-preview {
+            white-space: pre-line;
+            background: #f1f2f6;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            border-left: 3px solid #25D366;
+            width: 450px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2c3e50;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 4px;
+            display: none;
+            z-index: 1000;
+            font-weight: bold;
+        }
+        .instructions {
+            background: #e8f4fd;
+            padding: 12px;
+            border-left: 4px solid #3498db;
+            margin-bottom: 15px;
+            border-radius: 0 4px 4px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Nitto Notun - Smart Column Message Generator</h2>
+    
+    <div class="form-group">
+        <label for="deliveryDays">Delivery Days (Auto-calculated based on current date):</label>
+        <input type="text" id="deliveryDays" placeholder="Loading days...">
+    </div>
+
+    <div class="instructions">
+        📋 <b>How to Use:</b> Copy your data rows from Google Sheets (Ctrl+C). Click on cell <b>A1</b> (first cell below), paste your data (Ctrl+V), then click <b>Generate Messages</b>.
+    </div>
+
+    <label>Pasted Spreadsheet Data Grid:</label>
+    <div class="spreadsheet-container">
+        <table class="sheet-table" id="inputGrid">
+            <thead id="gridHead">
+                <tr>
+                    <th class="row-num"></th>
+                    <th>A (Date)</th><th>B (ID)</th><th>C (Note)</th><th>D (Name)</th><th>E (Phone)</th><th>F (Addr1)</th><th>G (Addr2)</th><th>H</th><th>I</th><th>J</th><th>K (Bill)</th><th>L (Prod1)</th><th>M (Qty1)</th><th>N (Prod2)</th><th>O (Qty2)</th>
+                </tr>
+            </thead>
+            <tbody id="gridBody">
+                <tr>
+                    <th class="row-num">1</th>
+                    <td contenteditable="true" data-row="0" data-col="0" placeholder="Paste here..."></td>
+                    <td contenteditable="true" data-row="0" data-col="1"></td>
+                    <td contenteditable="true" data-row="0" data-col="2"></td>
+                    <td contenteditable="true" data-row="0" data-col="3"></td>
+                    <td contenteditable="true" data-row="0" data-col="4"></td>
+                    <td contenteditable="true" data-row="0" data-col="5"></td>
+                    <td contenteditable="true" data-row="0" data-col="6"></td>
+                    <td contenteditable="true" data-row="0" data-col="7"></td>
+                    <td contenteditable="true" data-row="0" data-col="8"></td>
+                    <td contenteditable="true" data-row="0" data-col="9"></td>
+                    <td contenteditable="true" data-row="0" data-col="10"></td>
+                    <td contenteditable="true" data-row="0" data-col="11"></td>
+                    <td contenteditable="true" data-row="0" data-col="12"></td>
+                    <td contenteditable="true" data-row="0" data-col="13"></td>
+                    <td contenteditable="true" data-row="0" data-col="14"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="action-btns">
+        <button class="btn-generate" onclick="generateOrders()">Generate Messages</button>
+        <button class="btn-clear" onclick="clearGrid()">Clear Grid</button>
+    </div>
+
+    <table class="output-table" id="ordersTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Customer Name</th>
+                <th>Phone</th>
+                <th>Address</th>
+                
+                <th>Generated Message</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+
+<div id="toast" class="toast">✓ Message copied to clipboard!</div>
+
+<script>
+let currentMaxRows = 1;
+let currentMaxCols = 15;
+
+function setAutoDeliveryDays() {
+    const todayIndex = new Date().getDay(); 
+    let calculatedString = "Monday/Tuesday"; 
+
+    if (todayIndex === 6) {        // Saturday
+        calculatedString = "Monday/Tuesday";
+    } else if (todayIndex === 0) { // Sunday
+        calculatedString = "Tuesday/Wednesday";
+    } else if (todayIndex === 1) { // Monday
+        calculatedString = "Wednesday/Thursday";
+    } else if (todayIndex === 2) { // Tuesday
+        calculatedString = "Thursday/Friday";
+    } else if (todayIndex === 3) { // Wednesday
+        calculatedString = "Friday/Saturday";
+    } else if (todayIndex === 4) { // Thursday
+        calculatedString = "Sunday/Monday";
+    } else if (todayIndex === 5) { // Friday
+        calculatedString = "Sunday/Monday";
+    }
+
+    document.getElementById("deliveryDays").value = calculatedString;
+}
+
+setAutoDeliveryDays();
+
+function getColLabel(index) {
+    let label = "";
+    while (index >= 0) {
+        label = String.fromCharCode((index % 26) + 65) + label;
+        index = Math.floor(index / 26) - 1;
+    }
+    return label;
+}
+
+function rebuildGrid(totalRows, totalCols) {
+    currentMaxRows = totalRows;
+    currentMaxCols = totalCols;
+
+    const labelMap = {
+        0:"A (Date)", 1:"B (ID)", 2:"C (Note)", 3:"D (Name)", 4:"E (Phone)", 
+        5:"F (Addr1)", 6:"G (Addr2)", 7:"H", 8:"I", 9:"J", 10:"K (Bill)", 
+        11:"L (Prod1)", 12:"M (Qty1)", 13:"N (Prod2)", 14:"O (Qty2)"
+    };
+
+    const gridHead = document.getElementById('gridHead');
+    let headHtml = `<tr><th class="row-num"></th>`;
+    for (let c = 0; c < totalCols; c++) {
+        let label = labelMap[c] || getColLabel(c);
+        headHtml += `<th>${label}</th>`;
+    }
+    headHtml += `</tr>`;
+    gridHead.innerHTML = headHtml;
+
+    const gridBody = document.getElementById('gridBody');
+    gridBody.innerHTML = '';
+    for (let r = 0; r < totalRows; r++) {
+        const tr = document.createElement('tr');
+        const thNum = document.createElement('th');
+        thNum.className = 'row-num';
+        thNum.innerText = r + 1;
+        tr.appendChild(thNum);
+
+        for (let c = 0; c < totalCols; c++) {
+            const td = document.createElement('td');
+            td.contentEditable = true;
+            td.setAttribute('data-row', r);
+            td.setAttribute('data-col', c);
+            tr.appendChild(td);
+        }
+        gridBody.appendChild(tr);
+    }
+}
+
+document.getElementById('inputGrid').addEventListener('paste', function(e) {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    const rows = text.split(/\r?\n/).filter(r => r.trim() !== '');
+    if (rows.length === 0) return;
+
+    let activeEl = document.activeElement;
+    let startRow = (activeEl && activeEl.tagName === 'TD') ? parseInt(activeEl.getAttribute('data-row')) : 0;
+    let startCol = (activeEl && activeEl.tagName === 'TD') ? parseInt(activeEl.getAttribute('data-col')) : 0;
+
+    let maxIncomingCols = 0;
+    rows.forEach(row => {
+        const cCount = row.split('\t').length;
+        if (cCount > maxIncomingCols) maxIncomingCols = cCount;
+    });
+
+    let neededRows = startRow + rows.length;
+    let neededCols = startCol + maxIncomingCols;
+
+    let targetRows = Math.max(currentMaxRows, neededRows);
+    let targetCols = Math.max(currentMaxCols, neededCols);
+    
+    rebuildGrid(targetRows, targetCols);
+
+    rows.forEach((row, rOffset) => {
+        const cols = row.split('\t');
+        cols.forEach((value, cOffset) => {
+            let targetRow = startRow + rOffset;
+            let targetCol = startCol + cOffset;
+            let cell = document.querySelector(`td[data-row="${targetRow}"][data-col="${targetCol}"]`);
+            if (cell) {
+                cell.innerText = value.trim();
+            }
+        });
+    });
+});
+
+function clearGrid() {
+    rebuildGrid(1, 15);
+    setAutoDeliveryDays();
+    document.getElementById('ordersTable').style.display = 'none';
+}
+
+// Highly robust text cleaner and size detector
+function extractAndNormalizeSize(productText) {
+    const text = productText.toUpperCase();
+    
+    // Check for exact word matches first
+    if (/\bKIDS\b/.test(text)) return "KIDS";
+    if (/\bSMALL\b/.test(text)) return "S";
+    if (/\bMEDIUM\b/.test(text)) return "M";
+    if (/\bLARGE\b/.test(text)) return "L";
+    
+    // Check for specific size indicators 
+    if (/\b2XL\b/.test(text) || /\bXXL\b/.test(text)) return "XXL";
+    if (/\bXL\b/.test(text)) return "XL";
+    if (/\bL\b/.test(text)) return "L";
+    if (/\bM\b/.test(text)) return "M";
+    if (/\bS\b/.test(text)) return "S";
+
+    // Fallback extraction matching loose patterns in dividers
+    let cleanTokens = text.replace(/[^A-Z0-9\s]/g, ' '); // replace dashes/slashes/commas with spaces
+    let words = cleanTokens.split(/\s+/);
+    
+    if (words.includes("2XL") || words.includes("XXL")) return "XXL";
+    if (words.includes("XL")) return "XL";
+    if (words.includes("L")) return "L";
+    if (words.includes("M")) return "M";
+    if (words.includes("S")) return "S";
+
+    return "M"; // Default fallback if no size specified
+}
+
+function getSizeChart(productName, size) {
+    const prodLower = productName.toLowerCase();
+    const sUpper = size.toUpperCase().trim();
+
+    if (prodLower.includes("comfy jeans")) {
+        if (sUpper === 'M') return "M = কোমর 24–29″ / লম্বা 36″";
+        if (sUpper === 'L') return "L = কোমর 30–34″ / লম্বা 37″";
+        if (sUpper === 'XL') return "XL = কোমর 34–38″ / লম্বা 37.5″";
+        return "";
+    }
+    if (prodLower.includes("velora palazzo") && sUpper === 'XXL') return "XXL --(43-46 কোমর, 38 লম্বা)";
+    if (prodLower.includes("flared leggings") && sUpper === 'XXL') return "XXL --(43-48 কোমর, 38 লম্বা)";
+    if (sUpper === 'KIDS') return "Kids --(20-25 কোমর, 35 লম্বা)";
+    if (sUpper === 'M') return "M size: 27–32 কোমর / 37 লম্বা";
+    if (sUpper === 'L') return "L --(33-38 কোমর, 38 লম্বায়)";
+    if (sUpper === 'XL') return "XL --(39-42 কোমর, 38 লম্বা)";
+    if (sUpper === 'XXL') return "XXL --(43-52 কোমর, 38 লম্বা)";
+    return "";
+}
+
+function generateOrders() {
+    const deliveryDays = document.getElementById('deliveryDays').value || "Monday/Tuesday";
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = "";
+
+    const ordersList = [];
+
+    for (let r = 0; r < currentMaxRows; r++) {
+        let rowCells = document.querySelectorAll(`td[data-row="${r}"]`);
+        let rowVals = Array.from(rowCells).map(td => td.innerText.trim());
+
+        let orderId = rowVals[1]; // Column B
+        if (!orderId || orderId.length < 2) continue; 
+
+        let name = rowVals[3] || "Customer"; // Column D
+        let phone = rowVals[4] || "";        // Column E
+        
+        let addrPart1 = rowVals[5] || "";
+        let addrPart2 = rowVals[6] || "";
+        let address = [addrPart1, addrPart2].filter(p => p !== "").join(", ");
+
+        let bill = rowVals[10] || "0";       // Column K
+
+        let itemObjects = [];
+        for (let c = 11; c < currentMaxCols; c += 2) {
+            let cellProdText = rowVals[c];
+            let cellQtyText = rowVals[c + 1] || "1";
+
+            if (!cellProdText) continue;
+
+            // Strip operational dashboard logs
+            let cleanedProductLine = cellProdText.replace(/X\d+(,\s*busy)?|`|number off\s*\(\d+\)/gi, '').trim();
+            
+            // Smart detect normalized size using our newly integrated string solver engine
+            let extractedSize = extractAndNormalizeSize(cleanedProductLine);
+
+            itemObjects.push({
+                fullText: cleanedProductLine,
+                size: extractedSize,
+                qty: parseInt(cellQtyText) || 1
+            });
+        }
+
+        if (itemObjects.length === 0) continue;
+
+        ordersList.push({ orderId, name, phone, address, bill, items: itemObjects });
+    }
+
+    if (ordersList.length === 0) {
+        alert("No valid orders detected. Check your clipboard copy settings.");
+        return;
+    }
+
+    ordersList.forEach(order => {
+        let itemDetailsText = "";
+        let sizeChartsText = "";
+        let totalItemsCount = 0;
+
+        order.items.forEach(item => {
+            totalItemsCount += item.qty;
+            itemDetailsText += `${item.fullText} – ${item.qty} pcs\n`;
+            
+            let chart = getSizeChart(item.fullText, item.size);
+            if (chart && !sizeChartsText.includes(chart)) {
+                sizeChartsText += `${chart}\n`;
+            }
+        });
+
+        const finalMessage = `As-salamu alaykum, Nitto Notun theke ${totalItemsCount}ti product order korechen.\n
+        ` +
+                             `${itemDetailsText.trim()}\n` +
+                             `${sizeChartsText.trim()}\n
+                             ` +
+                             `Bill: ${order.bill}৳\n` +
+                             `Parcel ti ${deliveryDays} moddhe chole ashbe ইনশাআল্লাহ 🌸\n\n` +
+                             `Ami ki order ti confirm korbo?`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><b>${order.orderId}</b></td>
+            <td>${order.name}</td>
+            <td>${order.phone}</td>
+            <td>${order.address}</td>
+            <td>
+            <div class="msg-preview">${escapeHtml(finalMessage)}</div>
+            <br/>
+            <div><button class="whatsapp-btn" onclick="copyMessage(this, \`${btoa(unescape(encodeURIComponent(finalMessage)))}\`)">Copy Message</button></div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('ordersTable').style.display = 'table';
+}
+
+function copyMessage(btn, encodedMsg) {
+    const decodedMsg = decodeURIComponent(escape(atob(encodedMsg)));
+    navigator.clipboard.writeText(decodedMsg).then(() => {
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    });
+}
+
+function escapeHtml(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+</script>
+</body>
+</html>
