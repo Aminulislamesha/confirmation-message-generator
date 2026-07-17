@@ -354,7 +354,7 @@ document.getElementById('inputGrid').addEventListener('paste', function(e) {
 
 function clearGrid() {
     rebuildGrid(1, 15);
-    setAutoDeliveryDays();
+    // setAutoDeliveryDays() removed so manual dates persist until page refresh
     document.getElementById('ordersTable').style.display = 'none';
 }
 
